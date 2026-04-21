@@ -32,16 +32,58 @@ describe('/rest/products/:id/reviews', () => {
       .expect('jsonTypes', reviewResponseSchema)
   })
 
-  it('GET product reviews attack by injecting a mongoDB sleep command', () => {
+  it('GET product reviews rejects NoSQL injection with sleep command', () => {
     return frisby.get(`${REST_URL}/products/sleep(1)/reviews`)
-      .expect('status', 200)
+      .expect('status', 400)
       .expect('header', 'content-type', /application\/json/)
-      .expect('jsonTypes', reviewResponseSchema)
+      .expect('json', { error: 'Invalid product ID' })
   })
 
-  xit('GET product reviews by alphanumeric non-mongoDB-command product id', () => { // FIXME Turn on when #1960 is resolved
+  it('GET product reviews rejects NoSQL injection with JavaScript code', () => {
+    return frisby.get(`${REST_URL}/products/1;return true/reviews`)
+      .expect('status', 400)
+      .expect('header', 'content-type', /application\/json/)
+      .expect('json', { error: 'Invalid product ID' })
+  })
+
+  it('GET product reviews rejects NoSQL injection with this.constructor', () => {
+    return frisby.get(`${REST_URL}/products/this.constructor.constructor("return process")()/reviews`)
+      .expect('status', 400)
+      .expect('header', 'content-type', /application\/json/)
+      .expect('json', { error: 'Invalid product ID' })
+  })
+
+  it('GET product reviews rejects alphanumeric non-numeric product id', () => {
     return frisby.get(`${REST_URL}/products/kaboom/reviews`)
       .expect('status', 400)
+      .expect('header', 'content-type', /application\/json/)
+      .expect('json', { error: 'Invalid product ID' })
+  })
+
+  it('GET product reviews rejects malicious MongoDB operators', () => {
+    return frisby.get(`${REST_URL}/products/$ne/reviews`)
+      .expect('status', 400)
+      .expect('header', 'content-type', /application\/json/)
+      .expect('json', { error: 'Invalid product ID' })
+  })
+
+  it('GET product reviews accepts valid numeric product id', () => {
+    return frisby.get(`${REST_URL}/products/2/reviews`)
+      .expect('status', 200)
+      .expect('header', 'content-type', /application\/json/)
+  })
+
+  it('GET product reviews accepts zero as product id', () => {
+    return frisby.get(`${REST_URL}/products/0/reviews`)
+      .expect('status', 200)
+      .expect('header', 'content-type', /application\/json/)
+  })
+
+  it('GET product reviews rejects special characters in product id', () => {
+    return frisby.get(`${REST_URL}/products/1'OR'1'='1/reviews`)
+      .expect('status', 400)
+      .expect('header', 'content-type', /application\/json/)
+      .expect('json', { error: 'Invalid product ID' })
   })
 
   it('PUT single product review can be created', () => {
