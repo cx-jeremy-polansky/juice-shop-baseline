@@ -95,7 +95,15 @@ export function getUserProfile () {
         'Content-Security-Policy': CSP
       })
 
-      res.send(fn(user))
+      // Sanitize user data to prevent XSS
+      const sanitizedUser = {
+        ...user?.dataValues,
+        profileImage: entities.encode(user?.profileImage ?? ''),
+        email: entities.encode(user?.email ?? ''),
+        username: user?.username // username is already handled with escaping above
+      }
+
+      res.send(fn(sanitizedUser))
     } catch (err) {
       next(new Error('Blocked illegal activity by ' + req.socket.remoteAddress))
     }
