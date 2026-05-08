@@ -9,6 +9,8 @@
 #include "httplib.h"
 #include <libpq-fe.h>
 #include <cstdlib>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 
 // User model
 struct User {
@@ -82,6 +84,7 @@ PGconn* connectToDatabase() {
 
 int main() {
     httplib::Server svr;
+    SSL_library_init();
 
     svr.Post("/update-email", [](const httplib::Request& req, httplib::Response& res) {
         auto id = std::stoi(req.get_param_value("id"));
