@@ -1,0 +1,6 @@
+[requires]
+openssl/1.0.1f
+libpq/14.5
+
+[generators]
+cmake
