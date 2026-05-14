@@ -1,4 +1,5 @@
 BUILD_DIR := build
+CONAN     := $(shell which conan 2>/dev/null || echo $(shell python3 -m site --user-base)/bin/conan)
 
 .PHONY: all clean deps conan-install cmake-configure
 
@@ -13,8 +14,9 @@ httplib.h:
 	  -o httplib.h
 
 conan-install:
+	@which conan > /dev/null 2>&1 || pip3 install conan
 	mkdir -p $(BUILD_DIR)
-	conan install . --output-folder=$(BUILD_DIR) --build=missing
+	$(CONAN) install . --output-folder=$(BUILD_DIR) --build=missing
 
 cmake-configure: conan-install
 	cmake -S . -B $(BUILD_DIR) \
